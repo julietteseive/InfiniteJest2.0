@@ -2,6 +2,53 @@ __author__ = 'JulietteSeive'
 
 import nltk
 import re
+import os
+import pdb
+
+
+start_tag = "<SEGMENT>"
+end_tag = "</SEGMENT>"
+
+PATH_TO_NEW_JEST = "jest-with-tags.txt"
+
+def get_jest():
+    return open(PATH_TO_NEW_JEST).readlines()
+
+def is_close_tag(tag):
+    return tag.startswith("</")
+
+def strip_all_tags(seg_text):
+    return strip_tags(seg_text, get_tags_in_text(seg_text))
+
+
+def split_by_tags():
+
+    j = open("jest-with-tags2.txt", "r")
+    jest = j.read()
+    jest = re.sub(r'\n\s*\n', " ", jest)
+    #print jest
+    segments = []
+    create_segments(jest, segments)
+    print (segments)
+
+
+
+def create_segments(jest, segments):
+    #start_index = jest.index(start_tag)
+    end_index = jest.index(end_tag)
+    first_segment = jest[9:end_index]
+    segments.append(first_segment)
+    if len(jest) > (end_index + 10):
+        jest = jest[end_index + 10:]
+        create_segments(jest, segments)
+
+
+
+
+
+
+
+"""
 
 
 def get_tags_in_text(text):
@@ -12,6 +59,116 @@ def get_tags_in_text(text):
     return all_tags
 
 
+def strip_tags(seg, tags):
+    stripped = seg
+    for tag in tags:
+        if type(seg) == type([]):
+            # if a list of lines was passed in,
+            # join them
+            stripped = "\n".join(seg)
+        stripped = stripped.replace(tag, "")
+        # also the closing tag
+        stripped = stripped.replace(tag.replace("<", "</"), "")
+
+    return stripped
+
+def get_tags_for_segments():
+    '''
+    return a tuple of segments and their tags; the tags will be removed
+    from the text of the segments
+    '''
+    # the way to do this is a forward pass through the whole text
+    # keeping track of open tags
+    open_tags, tags_for_segments = [], []
+    segments = get_segments()
+    tags_opened_d = {}
+    for i, segment in enumerate(segments):
+        print "on segment %s. open tags: %s" % (i, open_tags)
+        #pdb.set_trace()
+        tags_in_segment = get_tags_in_text("\n ".join(segment))
+        tags_closed_in_segment = [t for t in tags_in_segment if is_close_tag(t)]
+        tags_opened_in_segment = [t for t in tags_in_segment if not is_close_tag(t)]
+
+        # keep a record of when we opened each tag
+        for new_tag in tags_opened_in_segment:
+            # don't overwrite tags
+            if not new_tag in tags_opened_d:
+                tags_opened_d[new_tag] = i
+            if new_tag in open_tags:
+                pdb.set_trace()
+
+        # take the already open tags, and anything opened in this segment
+        tags_in_segment = open_tags + tags_opened_in_segment
+        tags_for_segments.append(list(tags_in_segment))
+
+        open_tags = tags_in_segment
+
+        #
+        # now remove tags from open_tags that were closed in this segment
+        for tag in tags_closed_in_segment:
+            try:
+                cur_tag = tag.replace("</", "<")
+                open_tags.remove(cur_tag)
+                if cur_tag not in open_tags and cur_tag in tags_opened_d.keys():
+                    # remove it from the dictionary
+                    tags_opened_d.pop(cur_tag)
+            except:
+                print "whoops."
+                pdb.set_trace()
+
+    return (tags_for_segments, segments, tags_opened_d)
+
+
+
+def get_segments(strip_tags=False):
+    ''' returns all segments in text '''
+    segments = []
+    cur_segment = []
+    JEST = get_jest()
+    for line in JEST:
+        if line == "\n":
+            # blank line; this is a segment
+            segments.append(cur_segment)
+            cur_segment = []
+        else:
+            cur_segment.append(line)
+
+    if strip_tags:
+        # going to join the lines comprising segments here;
+        # not sure if we should *always* do this in this method?
+        # otherwise each segment is a list of lines
+        segments = ["\n".join(segment) for segment in segments]
+        segments = [strip_all_tags(segment) for segment in segments]
+
+    return segments
+
+def spit_out_text_for_segs(tags_we_care_about=["<Segment>"]):
+    tags_for_segs, segs, opened_d = get_tags_for_segments()
+
+    # strip the tags out of all the docs
+    stripped_segs = []
+    for tags_for_seg, seg in zip(tags_for_segs, segs):
+        stripped_segs.append(strip_tags(seg, tags_for_seg))
+
+    # make dirs for those tags we care about
+    for tag in tags_we_care_about:
+        try:
+            os.mkdir(_remove_bracks(tag))
+        except:
+            print "ah! couldn't make directory for %s. already exists?" % tag
+
+    # ok, now write out text
+    i = 0
+    for seg, tags_for_seg in zip(stripped_segs, tags_for_segs):
+        for tag_p in tags_we_care_about:
+            if tag_p in tags_for_seg:
+                fout = open("%s/%s" % (_remove_bracks(tag_p), i), 'w')
+                fout.write(seg)
+                fout.close()
+        i+=1
+    print "done!"
+
+"""
 
 def get_NERs(path_to_seg):
     NER_dict = {} # map entities to counts (i.e., # of occurences in this seg)
@@ -46,3 +203,14 @@ def get_NERs(path_to_seg):
                 NERs_to_types[entity] = subtree.node ### going to assume we always get this correct, I guess
 
     return NER_dict, NERs_to_types
+
+
+def _remove_bracks(tag):
+    return tag.replace("<", "").replace(">", "")
+
+
+def main():
+
+    split_by_tags()
+
+main()
