@@ -4,6 +4,7 @@ import nltk
 import re
 import os
 import pdb
+from textclean.textclean import textclean
 
 
 start_tag = "<SEGMENT>"
@@ -26,10 +27,12 @@ def split_by_tags():
     j = open("jest-with-tags2.txt", "r")
     jest = j.read()
     jest = re.sub(r'\n\s*\n', " ", jest)
+    jest = jest.decode('utf-8')
     #print jest
     segments = []
     create_segments(jest, segments)
     print (segments)
+    return segments
 
 
 
@@ -170,40 +173,38 @@ def spit_out_text_for_segs(tags_we_care_about=["<Segment>"]):
 
 """
 
-def get_NERs(path_to_seg):
+def get_NERs(segments):
     NER_dict = {} # map entities to counts (i.e., # of occurences in this seg)
     NERs_to_types = {} # map the NERs to the kinds of things they are
 
-    seg_text = open(path_to_seg).read()
-
-    # strip *all* tags
-    seg_text = strip_tags(seg_text, get_tags_in_text(seg_text))
-
+    for text in range(len(segments)-1):
+        print text
+        print segments[text]
     # tokenize, then POS text
-    pos_tagged_seg = nltk.pos_tag(nltk.word_tokenize(seg_text))
+        pos_tagged_seg = nltk.pos_tag(nltk.word_tokenize(segments[text]))
+        print pos_tagged_seg
 
     # and now the NER
-    NERd_seg = nltk.ne_chunk(pos_tagged_seg)
+        NERd_seg = nltk.ne_chunk(pos_tagged_seg)
 
     # kind of hacky, but this is how I'm parsing
     # the induced tree structure
-    for subtree in NERd_seg:
+        for subtree in NERd_seg:
         # then this is an NER
-        if type(subtree) == nltk.tree.Tree:
+            if type(subtree) == nltk.tree.Tree:
             # ignoring the *type* of NER for now -- i can't think of a
             # case in which we'd care (typically, entities with the same
             # name *ought* to be of the same type, I think...)
-            entity = subtree[0][0] # this parses out the token (entity) itself
-            entity_type = subtree.node
+                entity = subtree[0][0] # this parses out the token (entity) itself
+                entity_type = subtree.node
             # if we've already encountered it, just bump the count
-            if entity in NER_dict:
-                NER_dict[entity] += 1
-            else:
-                NER_dict[entity] = 1
-                NERs_to_types[entity] = subtree.node ### going to assume we always get this correct, I guess
+                if entity in NER_dict:
+                    NER_dict[entity] += 1
+                else:
+                    NER_dict[entity] = 1
+                    NERs_to_types[entity] = subtree.node ### going to assume we always get this correct, I guess
 
-    return NER_dict, NERs_to_types
-
+        return NER_dict, NERs_to_types
 
 def _remove_bracks(tag):
     return tag.replace("<", "").replace(">", "")
@@ -211,6 +212,7 @@ def _remove_bracks(tag):
 
 def main():
 
-    split_by_tags()
+    x = split_by_tags()
+    get_NERs(x)
 
 main()
