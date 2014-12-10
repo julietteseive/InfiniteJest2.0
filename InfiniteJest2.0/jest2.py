@@ -196,13 +196,13 @@ def get_NERs(segments):
             # case in which we'd care (typically, entities with the same
             # name *ought* to be of the same type, I think...)
                 entity = subtree[0][0] # this parses out the token (entity) itself
-                entity_type = subtree.node
+                entity_type = subtree.label()
             # if we've already encountered it, just bump the count
                 if entity in NER_dict:
                     NER_dict[entity] += 1
                 else:
                     NER_dict[entity] = 1
-                    NERs_to_types[entity] = subtree.node ### going to assume we always get this correct, I guess
+                    NERs_to_types[entity] = subtree.label() ### going to assume we always get this correct, I guess
 
         return NER_dict, NERs_to_types
 
