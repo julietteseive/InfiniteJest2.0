@@ -206,7 +206,7 @@ def get_NERs(segments):
                     NER_dict[entity] = 1
                     NERs_to_types[entity] = subtree.label() ### going to assume we always get this correct, I guess
 
-        return NER_dict, NERs_to_types
+        return NER_dict #,NERs_to_types
 
 def _remove_bracks(tag):
     return tag.replace("<", "").replace(">", "")
@@ -243,6 +243,7 @@ def main():
     print(n)
     text = (n.keys()) #text should be list of entities from NER dictionary to be used for LDA
     print(text)
+    extract_topics(text, numTopics=5)
 
 
 main()
