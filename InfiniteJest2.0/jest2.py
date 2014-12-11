@@ -2,6 +2,7 @@ __author__ = 'JulietteSeive'
 
 from gensim import corpora, models, similarities
 from gensim.models import ldamodel
+from itertools import izip
 import nltk
 import re
 import os
@@ -14,43 +15,39 @@ end_tag = "</SEGMENT>"
 
 PATH_TO_NEW_JEST = "jest-with-tags.txt"
 
+
 def get_jest():
     return open(PATH_TO_NEW_JEST).readlines()
 
+
 def is_close_tag(tag):
     return tag.startswith("</")
+
 
 def strip_all_tags(seg_text):
     return strip_tags(seg_text, get_tags_in_text(seg_text))
 
 
 def split_by_tags():
-
     j = open("jest-with-tags2.txt", "r")
     jest = j.read()
     jest = re.sub(r'\n\s*\n', " ", jest)
     jest = jest.decode('utf-8')
-    #print jest
+    # print jest
     segments = []
     create_segments(jest, segments)
     print (segments)
     return segments
 
 
-
 def create_segments(jest, segments):
-    #start_index = jest.index(start_tag)
+    # start_index = jest.index(start_tag)
     end_index = jest.index(end_tag)
     first_segment = jest[9:end_index]
     segments.append(first_segment)
     if len(jest) > (end_index + 10):
         jest = jest[end_index + 10:]
         create_segments(jest, segments)
-
-
-
-
-
 
 
 """
@@ -175,75 +172,115 @@ def spit_out_text_for_segs(tags_we_care_about=["<Segment>"]):
 
 """
 
-def get_NERs(segments):
-    NER_dict = {} # map entities to counts (i.e., # of occurences in this seg)
-    NERs_to_types = {} # map the NERs to the kinds of things they are
 
-    for text in range(len(segments)-1):
+def get_NERs(segments):
+    #NER_dict = {}  # map entities to counts (i.e., # of occurences in this seg)
+    #NERs_to_types = {}  # map the NERs to the kinds of things they are
+    NER_dicts = []
+    NERs_types = []
+
+    for text in range(len(segments) - 1):
+        NER_dict = {}
+        NERs_to_types = {}
         print text
         print segments[text]
-    # tokenize, then POS text
+        # tokenize, then POS text
         pos_tagged_seg = nltk.pos_tag(nltk.word_tokenize(segments[text]))
         print pos_tagged_seg
 
-    # and now the NER
+        # and now the NER
         NERd_seg = nltk.ne_chunk(pos_tagged_seg)
 
-    # kind of hacky, but this is how I'm parsing
-    # the induced tree structure
+        # kind of hacky, but this is how I'm parsing
+        # the induced tree structure
         for subtree in NERd_seg:
-        # then this is an NER
+            # then this is an NER
             if type(subtree) == nltk.tree.Tree:
-            # ignoring the *type* of NER for now -- i can't think of a
-            # case in which we'd care (typically, entities with the same
-            # name *ought* to be of the same type, I think...)
-                entity = subtree[0][0] # this parses out the token (entity) itself
+                # ignoring the *type* of NER for now -- i can't think of a
+                # case in which we'd care (typically, entities with the same
+                # name *ought* to be of the same type, I think...)
+                entity = subtree[0][0]  # this parses out the token (entity) itself
                 entity_type = subtree.label()
-            # if we've already encountered it, just bump the count
+                # if we've already encountered it, just bump the count
                 if entity in NER_dict:
                     NER_dict[entity] += 1
                 else:
                     NER_dict[entity] = 1
-                    NERs_to_types[entity] = subtree.label() ### going to assume we always get this correct, I guess
+                    NERs_to_types[entity] = subtree.label()  # ## going to assume we always get this correct, I guess
 
-        return NER_dict #,NERs_to_types
+        NER_dicts.append(NER_dict)
+        NERs_types.append(NERs_to_types)
+    return NER_dicts, NERs_types
+
+def populate_list(n):
+    word_list = []
+    for item in range(len(n)):
+        for key in item:
+            c = n.values()
+            while c > 0:
+                word_list.append(key)
+                c -= 1
+    return word_list
 
 def _remove_bracks(tag):
     return tag.replace("<", "").replace(">", "")
 
 
-def extract_topics(text, numTopics = 5): # list of entities, arbitrary number of topics
+def extract_topics(text, numTopics=5):  # list of entities, arbitrary number of topics
+    for segment in text:
+        segment = str(segment).split()
+        print(segment)
 
-    dict1 = corpora.Dictionary(text) # generate dictionary
+
+    dict1 = corpora.Dictionary(text)  # generate dictionary
+    # dict1.compactify()
     corpus = [dict1.doc2bow(t) for t in text]
 
-    lda = models.ldamodel.LdaModel(corpus, num_topics=numTopics) # generate LDA model
+
+    #printing documents and most probable topics for each doc
+    lda = ldamodel.LdaModel(corpus, id2word=dict1, num_topics=50)
+    corpus_lda = lda[corpus]
+
+    for l,t in izip(corpus_lda,corpus):
+        print l,"#",t
+    print
+
+
+    lda = models.ldamodel.LdaModel(corpus, num_topics=numTopics)  # generate LDA model
     i = 0
 
     #print the topics
 
-    for topic in lda.show_topic(topics = numTopics, formatted= False, topn = 10):
+    """
+    for topic in lda.show_topic(num_topics=10):
         i += 1
         print 'Topic #' + str(i) + ":",
         for p, id in topic:
             print dict[int(id)],
 
         print ""
+    """
 
-    #other printing option
-        for i in range(0, lda.num_topics-1):
-            print lda.print_topic(i)
-
+        #other printing option
+    for i in range(0, lda.num_topics - 1):
+        print lda.print_topic(i)
 
 
 def main():
-
     x = split_by_tags()
-    n = get_NERs(x)
+    n = get_NERs(x)[0]
     print(n)
-    text = (n.keys()) #text should be list of entities from NER dictionary to be used for LDA
-    print(text)
-    extract_topics(text, numTopics=5)
+    l = populate_list(n)
+    print l
+    # n = list(n)
+    #print(n)
+    #for document in range(0, n-1):
+    #print document
+
+    #text = (n.keys()) #text should be list of entities from NER dictionary to be used for LDA
+    print 'Printing text...'
+    #print(text)
+    extract_topics(n, numTopics=5)
 
 
 main()
