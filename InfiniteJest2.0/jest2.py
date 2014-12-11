@@ -1,5 +1,7 @@
 __author__ = 'JulietteSeive'
 
+from gensim import corpora, models, similarities
+from gensim.models import ldamodel
 import nltk
 import re
 import os
@@ -210,9 +212,37 @@ def _remove_bracks(tag):
     return tag.replace("<", "").replace(">", "")
 
 
+def extract_topics(text, numTopics = 5): # list of entities, arbitrary number of topics
+
+    dict1 = corpora.Dictionary(text) # generate dictionary
+    corpus = [dict1.doc2bow(t) for t in text]
+
+    lda = models.ldamodel.LdaModel(corpus, num_topics=numTopics) # generate LDA model
+    i = 0
+
+    #print the topics
+
+    for topic in lda.show_topic(topics = numTopics, formatted= False, topn = 10):
+        i += 1
+        print 'Topic #' + str(i) + ":",
+        for p, id in topic:
+            print dict[int(id)],
+
+        print ""
+
+    #other printing option
+        for i in range(0, lda.num_topics-1):
+            print lda.print_topic(i)
+
+
+
 def main():
 
     x = split_by_tags()
-    get_NERs(x)
+    n = get_NERs(x)
+    print(n)
+    text = (n.keys()) #text should be list of entities from NER dictionary to be used for LDA
+    print(text)
+
 
 main()
