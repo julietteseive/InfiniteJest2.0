@@ -179,7 +179,7 @@ def get_NERs(segments):
     NER_dicts = []
     NERs_types = []
 
-    for text in range(len(segments) - 1):
+    for text, segment_text in enumerate(segments):
         NER_dict = {}
         NERs_to_types = {}
         print text
@@ -212,16 +212,17 @@ def get_NERs(segments):
         NERs_types.append(NERs_to_types)
     return NER_dicts, NERs_types
 
+"""
 def populate_list(n):
     word_list = []
-    for item in range(len(n)):
-        for key in item:
-            c = n.values()
+    for segment in n:
+        for word in segment:
+            c = word.items()[0][1]
             while c > 0:
-                word_list.append(key)
+                word_list.append(word.items()[0][0])
                 c -= 1
     return word_list
-
+"""
 def _remove_bracks(tag):
     return tag.replace("<", "").replace(">", "")
 
@@ -259,19 +260,22 @@ def extract_topics(text, numTopics=5):  # list of entities, arbitrary number of 
             print dict[int(id)],
 
         print ""
+
+
+        #print the token topics
+    for i in range(0, lda.num_topics - 1):
+        print lda.show_topic(i)
     """
 
-        #other printing option
-    for i in range(0, lda.num_topics - 1):
-        print lda.print_topic(i)
-
+    for i in lda.show_topic(topicid=2, topn=5):
+        print i
 
 def main():
     x = split_by_tags()
     n = get_NERs(x)[0]
     print(n)
-    l = populate_list(n)
-    print l
+    #l = populate_list(n)
+    #print l
     # n = list(n)
     #print(n)
     #for document in range(0, n-1):
