@@ -212,30 +212,35 @@ def get_NERs(segments):
         NERs_types.append(NERs_to_types)
     return NER_dicts, NERs_types
 
-"""
+
 def populate_list(n):
     word_list = []
     for segment in n:
+        segment_wordlist = []
         for word in segment:
-            c = word.items()[0][1]
-            while c > 0:
-                word_list.append(word.items()[0][0])
-                c -= 1
+            x = segment[word]
+            #c = word.items()[0][1]
+            while x > 0:
+                segment_wordlist.append(word)
+                x -= 1
+    word_list.append(segment_wordlist)
     return word_list
-"""
+
 def _remove_bracks(tag):
     return tag.replace("<", "").replace(">", "")
 
 
 def extract_topics(text, numTopics=5):  # list of entities, arbitrary number of topics
+    """
     for segment in text:
         segment = str(segment).split()
         print(segment)
-
+    """
 
     dict1 = corpora.Dictionary(text)  # generate dictionary
     # dict1.compactify()
     corpus = [dict1.doc2bow(t) for t in text]
+
 
 
     #printing documents and most probable topics for each doc
@@ -270,12 +275,15 @@ def extract_topics(text, numTopics=5):  # list of entities, arbitrary number of 
     for i in lda.show_topic(topicid=2, topn=5):
         print i
 
+    x = lda.print_topics(5)
+    print x
+
 def main():
     x = split_by_tags()
     n = get_NERs(x)[0]
     print(n)
-    #l = populate_list(n)
-    #print l
+    l = populate_list(n)
+    print l
     # n = list(n)
     #print(n)
     #for document in range(0, n-1):
@@ -284,7 +292,7 @@ def main():
     #text = (n.keys()) #text should be list of entities from NER dictionary to be used for LDA
     print 'Printing text...'
     #print(text)
-    extract_topics(n, numTopics=5)
+    extract_topics(l, numTopics=5)
 
 
 main()
