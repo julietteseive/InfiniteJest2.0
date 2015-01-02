@@ -244,15 +244,16 @@ def extract_topics(text, numTopics=5):  # list of entities, arbitrary number of 
 
 
     #printing documents and most probable topics for each doc
+    #lda = ldamodel.LdaModel(corpus, id2word=dict1, num_topics=50)
     lda = ldamodel.LdaModel(corpus, id2word=dict1, num_topics=50)
     corpus_lda = lda[corpus]
 
-    for l,t in izip(corpus_lda,corpus):
-        print l,"#",t
-    print
+    #for l,t in izip(corpus_lda,corpus):
+    #    print l,"#",t
+    #print
 
 
-    lda = models.ldamodel.LdaModel(corpus, num_topics=numTopics)  # generate LDA model
+    #lda = models.ldamodel.LdaModel(corpus, num_topics=numTopics)  # generate LDA model
     i = 0
 
     #print the topics
@@ -276,6 +277,7 @@ def extract_topics(text, numTopics=5):  # list of entities, arbitrary number of 
         print i
 
     x = lda.print_topics(5)
+
     print x
 
 def main():
@@ -292,7 +294,9 @@ def main():
     #text = (n.keys()) #text should be list of entities from NER dictionary to be used for LDA
     print 'Printing text...'
     #print(text)
-    extract_topics(l, numTopics=5)
+    lda_output = extract_topics(l, numTopics=5)
+    import pdb
+    pdb.set_trace()
 
 
 main()
