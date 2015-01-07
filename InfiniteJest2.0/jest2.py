@@ -2,12 +2,8 @@ __author__ = 'JulietteSeive'
 
 from gensim import corpora, models, similarities
 from gensim.models import ldamodel
-from itertools import izip
 import nltk
 import re
-import os
-import pdb
-from textclean.textclean import textclean
 
 
 start_tag = "<SEGMENT>"
@@ -20,23 +16,15 @@ def get_jest():
     return open(PATH_TO_NEW_JEST).readlines()
 
 
-def is_close_tag(tag):
-    return tag.startswith("</")
-
-
-def strip_all_tags(seg_text):
-    return strip_tags(seg_text, get_tags_in_text(seg_text))
-
-
 def split_by_tags():
-    j = open("jest-with-tags2.txt", "r")
+    j = open("jest-with-tags.txt", "r")
     jest = j.read()
     jest = re.sub(r'\n\s*\n', " ", jest)
     jest = jest.decode('utf-8')
-    # print jest
+    print jest
     segments = []
     create_segments(jest, segments)
-    print (segments)
+    print segments
     return segments
 
 
@@ -45,7 +33,7 @@ def create_segments(jest, segments):
     end_index = jest.index(end_tag)
     first_segment = jest[9:end_index]
     segments.append(first_segment)
-    if len(jest) > (end_index + 10):
+    if len(jest) > (end_index + 10): #change to 12 to eliminate the "T>" from <SEGMENT> tag
         jest = jest[end_index + 10:]
         create_segments(jest, segments)
 
@@ -61,11 +49,8 @@ def get_NERs(segments):
     for text, segment_text in enumerate(segments):
         NER_dict = {}
         NERs_to_types = {}
-        print text
-        print segments[text]
         # tokenize, then POS text
         pos_tagged_seg = nltk.pos_tag(nltk.word_tokenize(segments[text]))
-        print pos_tagged_seg
 
         # and now the NER
         NERd_seg = nltk.ne_chunk(pos_tagged_seg)
@@ -92,7 +77,7 @@ def get_NERs(segments):
     return NER_dicts, NERs_types
 
 
-def populate_list(n):
+def populate_list(n): #creating a list of lists of words in each segment
     word_list = []
     for segment in n:
         segment_wordlist = []
@@ -107,7 +92,6 @@ def extract_topics(text, numTopics=5):  # list of entities, arbitrary number of 
 
 
     dict1 = corpora.Dictionary(text)  # generate dictionary
-    # dict1.compactify()
     corpus = [dict1.doc2bow(t) for t in text]
 
     #printing documents and most probable topics for each doc
@@ -124,12 +108,7 @@ def extract_topics(text, numTopics=5):  # list of entities, arbitrary number of 
 def main():
     x = split_by_tags()
     n = get_NERs(x)[0]
-    print(n)
     l = populate_list(n)
-    print l
-
-    print 'Printing text...'
-    #print(text)
     lda_output = extract_topics(l, numTopics=5)
 
 
