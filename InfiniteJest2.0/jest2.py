@@ -50,127 +50,6 @@ def create_segments(jest, segments):
         create_segments(jest, segments)
 
 
-"""
-
-
-def get_tags_in_text(text):
-    p = re.compile(r'<.*?>') # finds the *closing* tags
-    all_tags = p.findall(text)
-    tags = [x for x in list(set(all_tags))]
-    # which are close tags?
-    return all_tags
-
-
-def strip_tags(seg, tags):
-    stripped = seg
-    for tag in tags:
-        if type(seg) == type([]):
-            # if a list of lines was passed in,
-            # join them
-            stripped = "\n".join(seg)
-        stripped = stripped.replace(tag, "")
-        # also the closing tag
-        stripped = stripped.replace(tag.replace("<", "</"), "")
-
-    return stripped
-
-def get_tags_for_segments():
-    '''
-    return a tuple of segments and their tags; the tags will be removed
-    from the text of the segments
-    '''
-    # the way to do this is a forward pass through the whole text
-    # keeping track of open tags
-    open_tags, tags_for_segments = [], []
-    segments = get_segments()
-    tags_opened_d = {}
-    for i, segment in enumerate(segments):
-        print "on segment %s. open tags: %s" % (i, open_tags)
-        #pdb.set_trace()
-        tags_in_segment = get_tags_in_text("\n ".join(segment))
-        tags_closed_in_segment = [t for t in tags_in_segment if is_close_tag(t)]
-        tags_opened_in_segment = [t for t in tags_in_segment if not is_close_tag(t)]
-
-        # keep a record of when we opened each tag
-        for new_tag in tags_opened_in_segment:
-            # don't overwrite tags
-            if not new_tag in tags_opened_d:
-                tags_opened_d[new_tag] = i
-            if new_tag in open_tags:
-                pdb.set_trace()
-
-        # take the already open tags, and anything opened in this segment
-        tags_in_segment = open_tags + tags_opened_in_segment
-        tags_for_segments.append(list(tags_in_segment))
-
-        open_tags = tags_in_segment
-
-        #
-        # now remove tags from open_tags that were closed in this segment
-        for tag in tags_closed_in_segment:
-            try:
-                cur_tag = tag.replace("</", "<")
-                open_tags.remove(cur_tag)
-                if cur_tag not in open_tags and cur_tag in tags_opened_d.keys():
-                    # remove it from the dictionary
-                    tags_opened_d.pop(cur_tag)
-            except:
-                print "whoops."
-                pdb.set_trace()
-
-    return (tags_for_segments, segments, tags_opened_d)
-
-
-
-def get_segments(strip_tags=False):
-    ''' returns all segments in text '''
-    segments = []
-    cur_segment = []
-    JEST = get_jest()
-    for line in JEST:
-        if line == "\n":
-            # blank line; this is a segment
-            segments.append(cur_segment)
-            cur_segment = []
-        else:
-            cur_segment.append(line)
-
-    if strip_tags:
-        # going to join the lines comprising segments here;
-        # not sure if we should *always* do this in this method?
-        # otherwise each segment is a list of lines
-        segments = ["\n".join(segment) for segment in segments]
-        segments = [strip_all_tags(segment) for segment in segments]
-
-    return segments
-
-def spit_out_text_for_segs(tags_we_care_about=["<Segment>"]):
-    tags_for_segs, segs, opened_d = get_tags_for_segments()
-
-    # strip the tags out of all the docs
-    stripped_segs = []
-    for tags_for_seg, seg in zip(tags_for_segs, segs):
-        stripped_segs.append(strip_tags(seg, tags_for_seg))
-
-    # make dirs for those tags we care about
-    for tag in tags_we_care_about:
-        try:
-            os.mkdir(_remove_bracks(tag))
-        except:
-            print "ah! couldn't make directory for %s. already exists?" % tag
-
-    # ok, now write out text
-    i = 0
-    for seg, tags_for_seg in zip(stripped_segs, tags_for_segs):
-        for tag_p in tags_we_care_about:
-            if tag_p in tags_for_seg:
-                fout = open("%s/%s" % (_remove_bracks(tag_p), i), 'w')
-                fout.write(seg)
-                fout.close()
-        i+=1
-    print "done!"
-
-"""
 
 
 def get_NERs(segments):
@@ -217,66 +96,28 @@ def populate_list(n):
     word_list = []
     for segment in n:
         segment_wordlist = []
-        for word in segment:
-            x = segment[word]
-            #c = word.items()[0][1]
-            while x > 0:
-                segment_wordlist.append(word)
-                x -= 1
-    word_list.append(segment_wordlist)
+        for word, count in segment.items():
+            segment_wordlist.extend([word]*count)
+        word_list.append(segment_wordlist)
     return word_list
 
-def _remove_bracks(tag):
-    return tag.replace("<", "").replace(">", "")
 
 
 def extract_topics(text, numTopics=5):  # list of entities, arbitrary number of topics
-    """
-    for segment in text:
-        segment = str(segment).split()
-        print(segment)
-    """
+
 
     dict1 = corpora.Dictionary(text)  # generate dictionary
     # dict1.compactify()
     corpus = [dict1.doc2bow(t) for t in text]
 
-
-
     #printing documents and most probable topics for each doc
-    #lda = ldamodel.LdaModel(corpus, id2word=dict1, num_topics=50)
-    lda = ldamodel.LdaModel(corpus, id2word=dict1, num_topics=50)
+    lda = ldamodel.LdaModel(corpus, id2word=dict1, num_topics=5)
     corpus_lda = lda[corpus]
-
-    #for l,t in izip(corpus_lda,corpus):
-    #    print l,"#",t
-    #print
-
-
-    #lda = models.ldamodel.LdaModel(corpus, num_topics=numTopics)  # generate LDA model
-    i = 0
-
-    #print the topics
-
-    """
-    for topic in lda.show_topic(num_topics=10):
-        i += 1
-        print 'Topic #' + str(i) + ":",
-        for p, id in topic:
-            print dict[int(id)],
-
-        print ""
-
-
-        #print the token topics
-    for i in range(0, lda.num_topics - 1):
-        print lda.show_topic(i)
-    """
 
     for i in lda.show_topic(topicid=2, topn=5):
         print i
 
-    x = lda.print_topics(5)
+    x = lda.print_topics(3)
 
     print x
 
@@ -286,17 +127,11 @@ def main():
     print(n)
     l = populate_list(n)
     print l
-    # n = list(n)
-    #print(n)
-    #for document in range(0, n-1):
-    #print document
 
-    #text = (n.keys()) #text should be list of entities from NER dictionary to be used for LDA
     print 'Printing text...'
     #print(text)
     lda_output = extract_topics(l, numTopics=5)
-    import pdb
-    pdb.set_trace()
+
 
 
 main()
