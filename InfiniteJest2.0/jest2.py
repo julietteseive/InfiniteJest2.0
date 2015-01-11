@@ -33,8 +33,8 @@ def create_segments(jest, segments):
     end_index = jest.index(end_tag)
     first_segment = jest[9:end_index]
     segments.append(first_segment)
-    if len(jest) > (end_index + 10): #change to 12 to eliminate the "T>" from <SEGMENT> tag
-        jest = jest[end_index + 10:]
+    if len(jest) > (end_index + 12): #change to 12 to eliminate the "T>" from <SEGMENT> tag
+        jest = jest[end_index + 12:]
         create_segments(jest, segments)
 
 
