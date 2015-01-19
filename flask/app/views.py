@@ -20,12 +20,16 @@ What book are we looking at today?
     <textarea cols="50" rows="5">
     </textarea>
 <br>
+Number of Topics: <input title="Number of desired topics" id="num_topics" name="topics" type="text" size ="3" />
+
 <input type="submit"/>
 </form>
 </br>
 <br>
 <form name="myWebForm" action="mailto:julietteseive@gmail.com" method="post">
 <input type="file" name="uploadField" />
+<br>
+Number of Topics: <input title="Number of desired topics" id="num_topics" name="topics" type="text" size ="3" />
 <input type="submit" value="Submit" />
 </form>
 </br>
